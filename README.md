@@ -1,7 +1,16 @@
 # StudyGo_b
 Backend del proyecto "StudyGo"
 
-Cuando clonen el repositorio deben crear su propio venv
+Instalación y Configuración
 
-Usen: "python -m venv venv" en la terminal para crear su entorno virtual. 
-Luego instalen las dependencias: "pip install r requirements.txt"
+Sigan estos pasos para configurar el proyecto en su pc:
+
+1. Crear el entorno virtual:
+   python -m venv venv
+
+2. Activar el entorno virtual:
+   venv\Scripts\activate
+
+3. Instalar las dependencias:
+   pip install -r requirements.txt
+
