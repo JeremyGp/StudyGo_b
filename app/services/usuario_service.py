@@ -2,7 +2,7 @@ import bcrypt
 from sqlalchemy.orm import Session
 
 from app.models.usuario import Usuario
-from app.schemas.usuario_schema import UsuarioCreate, UsuarioUpdate
+from app.schemas.usuario import UsuarioCreate, UsuarioUpdate
 
 
 def hash_contrasena(contrasena: str) -> str:
