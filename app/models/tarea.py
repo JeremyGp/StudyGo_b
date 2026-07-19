@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.base import Base
+from app.models.enums import EstadoTarea, PrioridadTarea
 
 
 class Tarea(Base):
@@ -10,22 +11,15 @@ class Tarea(Base):
     id_tarea = Column(Integer, primary_key=True, index=True)
     titulo = Column(String(150), nullable=False)
     descripcion = Column(Text)
-    fecha_inicio = Column(DateTime)
-    fecha_limite = Column(DateTime)
-    id_estado = Column(Integer, ForeignKey("estados.id_estado"))
-    id_prioridad = Column(Integer, ForeignKey("prioridades.id_prioridad"))
-    id_creador = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
-    id_responsable = Column(Integer, ForeignKey("usuarios.id"))
-    id_proyecto = Column(Integer, ForeignKey("proyectos.id_proyecto"))
-    id_tarea_padre = Column(Integer, ForeignKey("tareas.id_tarea"))
     fecha_creacion = Column(DateTime, server_default=func.now())
-    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    fecha_inicio_sugerida = Column(DateTime)
+    fecha_limite = Column(DateTime)
+    horas_estimadas = Column(Integer)
+    estado = Column(Enum(EstadoTarea), nullable=False)
+    prioridad = Column(Enum(PrioridadTarea), nullable=False)
+    id_asignatura = Column(Integer, ForeignKey("asignaturas.id_asignatura"), index=True)
 
-    estado = relationship("Estado", back_populates="tareas")
-    prioridad = relationship("Prioridad", back_populates="tareas")
-    creador = relationship("Usuario", foreign_keys=[id_creador], back_populates="tareas_creadas")
-    responsable = relationship("Usuario", foreign_keys=[id_responsable], back_populates="tareas_asignadas")
-    proyecto = relationship("Proyecto", back_populates="tareas")
-    subtareas = relationship("Tarea", backref="tarea_padre", remote_side=[id_tarea])
-    comentarios = relationship("Comentario", back_populates="tarea")
+    #Relaciones
+    asignatura = relationship("Asignatura", back_populates="tareas")
+    subtareas = relationship("Subtarea", back_populates="tarea")
     notificaciones = relationship("Notificacion", back_populates="tarea")
