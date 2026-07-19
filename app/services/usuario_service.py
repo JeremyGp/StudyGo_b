@@ -39,7 +39,7 @@ def crear_usuario(db: Session, datos: UsuarioCreate) -> Usuario:
 # Usuario | None significa que la función puede devolver un objeto Usuario o None si no se encuentra el usuario.
 def obtener_usuario_por_id(db: Session, id_usuario: int) -> Usuario | None:
     """Busca un usuario por su id. Devuelve None si no existe."""
-    return db.query(Usuario).filter(Usuario.id == id_usuario).first()
+    return db.query(Usuario).filter(Usuario.id_usuario == id_usuario).first()
 
 
 def obtener_usuario_por_correo(db: Session, correo: str) -> Usuario | None:
