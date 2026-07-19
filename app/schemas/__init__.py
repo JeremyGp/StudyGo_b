@@ -1,1 +1,6 @@
-from app.schemas.usuario import UsuarioBase, UsuarioCreate, UsuarioUpdate, UsuarioOut
+from .usuario import (UsuarioBase,UsuarioCreate,UsuarioUpdate,UsuarioLogin,UsuarioOut,)
+from .asignatura import (AsignaturaBase,AsignaturaCreate,AsignaturaUpdate,AsignaturaOut,)
+from .horario import (HorarioBase,HorarioCreate,HorarioUpdate,HorarioOut,)
+from .tarea import (TareaBase,TareaCreate,TareaUpdate,TareaOut,)
+from .subtarea import (SubtareaBase,SubtareaCreate,SubtareaUpdate,SubtareaOut,)
+from .notificacion import (NotificacionBase,NotificacionCreate,NotificacionUpdate,NotificacionOut,)
