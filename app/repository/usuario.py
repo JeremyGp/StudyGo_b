@@ -35,6 +35,11 @@ def actualizar(db: Session, usuario: Usuario, datos: UsuarioUpdate):
     db.refresh(usuario)
     return usuario
 
+def desactivar(db: Session, usuario: Usuario):
+    usuario.estado = False
+    db.commit()
+    db.refresh(usuario)
+    return usuario
 
 def eliminar(db: Session, usuario: Usuario):
     db.delete(usuario)
