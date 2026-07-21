@@ -1,5 +1,5 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.core.security import verificar_access_token
@@ -7,9 +7,10 @@ from app.database.database import get_db
 from app.repository import usuario as usuario_repository
 from app.models.usuario import Usuario
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/usuarios/login")
+bearer_scheme = HTTPBearer()
 
-def get_current_user(token: str = Depends(oauth2_scheme),db: Session = Depends(get_db)) -> Usuario:
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),db: Session = Depends(get_db)) -> Usuario:
+    token = credentials.credentials
     """Obtiene el usuario autenticado a partir del JWT."""
 
     payload = verificar_access_token(token)
