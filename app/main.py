@@ -10,7 +10,7 @@ from app.database.base import Base
 from app.database.database import engine
 from app.core.config import settings
 from app.core.logging import configure_logging
-from app.routers import (usuario, asignatura, horario, tarea, notificacion)
+from app.routers import (usuario, asignatura, horario, tarea, notificacion, dashboard)
 
 logger = configure_logging()
 
@@ -75,14 +75,20 @@ async def unhandled_exception_handler(_request: Request, exc: Exception) -> JSON
 
 #CORS
 # React con Vite
-app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080/","http://localhost:8080"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:8080", "http://localhost:8080"],  # sin barra final
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 #ROUTERS
 app.include_router(usuario.router)
 app.include_router(asignatura.router)
 app.include_router(horario.router)
 app.include_router(tarea.router)
 app.include_router(notificacion.router)
+app.include_router(dashboard.router)
 
 #Ruta principal
 @app.get("/")
