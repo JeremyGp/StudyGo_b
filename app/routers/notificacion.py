@@ -1,3 +1,8 @@
+from typing import cast
+
+# Se usa cast para convertir los identificadores del modelo SQLAlchemy a valores simples
+# y evitar errores de tipado al compararlos con el usuario autenticado.
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database.database import get_db
@@ -20,14 +25,22 @@ def crear_notificacion(datos: NotificacionCreate,id_tarea: int | None = None,db:
         if tarea is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
 
-        if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+        # Se valida que la tarea pertenezca al mismo usuario autenticado antes de
+        # asociarle una notificación.
+        if cast(int, tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para asociar esta notificación a esa tarea.")
 
-    return notificacion_service.crear_notificacion(db,datos,usuario_actual.id_usuario,id_tarea)
+    # El identificador del usuario autenticado se convierte a un entero simple para
+    # que la capa de servicio reciba un valor compatible con la lógica de negocio.
+    usuario_id = cast(int, usuario_actual.id_usuario)
+    return notificacion_service.crear_notificacion(db,datos,usuario_id,id_tarea)
 
 @router.get("/",response_model=list[NotificacionOut])
 def listar_notificaciones(db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
-    return notificacion_service.listar_notificaciones(db,usuario_actual.id_usuario)
+    # Se extrae el id del usuario autenticado como entero simple para listar
+    # únicamente sus notificaciones y no las de otros usuarios.
+    usuario_id = cast(int, usuario_actual.id_usuario)
+    return notificacion_service.listar_notificaciones(db,usuario_id)
 
 @router.get("/{id_notificacion}",response_model=NotificacionOut)
 def obtener_notificacion(id_notificacion: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
@@ -36,7 +49,9 @@ def obtener_notificacion(id_notificacion: int,db: Session = Depends(get_db),usua
     if notificacion is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Notificación no encontrada.")
 
-    if notificacion.id_usuario != usuario_actual.id_usuario:
+    # Se comprueba la propiedad de la notificación para evitar que un usuario
+    # acceda a información que no le pertenece.
+    if cast(int, notificacion.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para acceder a esta notificación.")
 
     return notificacion
@@ -48,7 +63,8 @@ def actualizar_notificacion(id_notificacion: int,datos: NotificacionUpdate,db: S
     if notificacion is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Notificación no encontrada.")
 
-    if notificacion.id_usuario != usuario_actual.id_usuario:
+    # Se limita la modificación a la notificación del usuario autenticado.
+    if cast(int, notificacion.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para modificar esta notificación.")
 
     return notificacion_service.actualizar_notificacion(db,id_notificacion,datos)
@@ -60,7 +76,8 @@ def eliminar_notificacion(id_notificacion: int,db: Session = Depends(get_db),usu
     if notificacion is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Notificación no encontrada.")
 
-    if notificacion.id_usuario != usuario_actual.id_usuario:
+    # Se impide borrar una notificación que pertenezca a otro usuario.
+    if cast(int, notificacion.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para eliminar esta notificación.")
 
     notificacion_service.eliminar_notificacion(db,id_notificacion)

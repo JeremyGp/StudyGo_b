@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "StudyGo"
-    DATABASE_URL: str = "sqlite:///./studygo.db"
+    DATABASE_URL: str = "mysql+pymysql://root:root@localhost:3306/studygo"
     SECRET_KEY: str = "dev-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             cleaned_value = value.strip()
             if not cleaned_value or "{usuario}" in cleaned_value or "{contraseña}" in cleaned_value:
-                return "sqlite:///./studygo.db"
+                return "mysql+pymysql://root:root@localhost:3306/studygo"
             return cleaned_value
         return value
 

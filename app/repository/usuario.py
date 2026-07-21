@@ -28,6 +28,8 @@ def crear(db: Session, usuario: Usuario):
 
 
 def actualizar(db: Session, usuario: Usuario, datos: UsuarioUpdate):
+    # Se aplican solo los campos enviados en la solicitud, usando setattr para
+    # mantener compatibilidad con los atributos del modelo SQLAlchemy.
     for campo, valor in datos.model_dump(exclude_unset=True).items():
         setattr(usuario, campo, valor)
 
@@ -36,7 +38,8 @@ def actualizar(db: Session, usuario: Usuario, datos: UsuarioUpdate):
     return usuario
 
 def desactivar(db: Session, usuario: Usuario):
-    usuario.estado = False
+    # Se desactiva el usuario de forma lógica mediante un cambio de estado.
+    setattr(usuario, "estado", False)
     db.commit()
     db.refresh(usuario)
     return usuario
