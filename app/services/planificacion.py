@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.enums import DiasSemana, PrioridadTarea
 from app.models.horario import Horario
 from app.models.tarea import Tarea
+from app.repository import asignatura as asignatura_repository
 from app.repository import horario as horario_repository
 from app.repository import tarea as tarea_repository
 
@@ -99,8 +100,9 @@ def generar_plan_estudio(
     while horas_restantes > 0 and dia_actual <= tarea.fecha_limite.date():
         bloques_libres = obtener_bloques_libres_del_dia(
             db,
-            tarea.id_asignatura,
-            dia_actual
+            tarea,
+            dia_actual,
+            tarea.id_tarea
         )
 
         for inicio, fin in bloques_libres:
@@ -173,14 +175,20 @@ def validar_tarea_planificable(tarea: Tarea) -> None:
 
 def obtener_bloques_libres_del_dia(
     db: Session,
-    id_asignatura: int,
-    dia: date
+    tarea: Tarea,
+    dia: date,
+    id_tarea_excluida: int | None = None
 ) -> list[tuple[datetime, datetime]]:
-    """Obtiene los espacios libres del dia evitando horarios de clase."""
+    """Obtiene los espacios libres del dia evitando clases y tareas planificadas."""
 
     inicio_dia = datetime.combine(dia, HORA_INICIO_DIA)
     fin_dia = datetime.combine(dia, HORA_FIN_DIA)
-    bloques_ocupados = obtener_bloques_clase_del_dia(db, id_asignatura, dia)
+    bloques_ocupados = obtener_bloques_ocupados_del_dia(
+        db,
+        tarea,
+        dia,
+        id_tarea_excluida
+    )
 
     if not bloques_ocupados:
         return [(inicio_dia, fin_dia)]
@@ -199,6 +207,119 @@ def obtener_bloques_libres_del_dia(
         bloques_libres.append((cursor, fin_dia))
 
     return bloques_libres
+
+
+def obtener_bloques_ocupados_del_dia(
+    db: Session,
+    tarea: Tarea,
+    dia: date,
+    id_tarea_excluida: int | None = None
+) -> list[tuple[datetime, datetime]]:
+    """Une los horarios de clase y las tareas ya planificadas del usuario."""
+
+    bloques_clase = obtener_bloques_clase_usuario_del_dia(db, tarea, dia)
+    bloques_tareas = obtener_bloques_tareas_del_dia(
+        db,
+        tarea,
+        dia,
+        id_tarea_excluida
+    )
+
+    return ordenar_y_unificar_bloques(bloques_clase + bloques_tareas)
+
+
+def obtener_bloques_clase_usuario_del_dia(
+    db: Session,
+    tarea: Tarea,
+    dia: date
+) -> list[tuple[datetime, datetime]]:
+    """Obtiene los horarios de clase de todas las asignaturas del usuario."""
+
+    if tarea.asignatura is None:
+        return obtener_bloques_clase_del_dia(db, tarea.id_asignatura, dia)
+
+    asignaturas = asignatura_repository.listar_por_usuario(
+        db,
+        tarea.asignatura.id_usuario
+    )
+    bloques = []
+
+    for asignatura in asignaturas:
+        bloques.extend(
+            obtener_bloques_clase_del_dia(
+                db,
+                asignatura.id_asignatura,
+                dia
+            )
+        )
+
+    return ordenar_y_unificar_bloques(bloques)
+
+
+def obtener_bloques_tareas_del_dia(
+    db: Session,
+    tarea: Tarea,
+    dia: date,
+    id_tarea_excluida: int | None = None
+) -> list[tuple[datetime, datetime]]:
+    """Obtiene bloques ocupados por tareas ya planificadas del mismo usuario."""
+
+    if tarea.asignatura is None:
+        return []
+
+    asignaturas = asignatura_repository.listar_por_usuario(
+        db,
+        tarea.asignatura.id_usuario
+    )
+    bloques = []
+
+    for asignatura in asignaturas:
+        tareas = tarea_repository.listar_por_asignatura(
+            db,
+            asignatura.id_asignatura
+        )
+
+        for tarea_planificada in tareas:
+            bloque = convertir_tarea_en_bloque_ocupado(
+                tarea_planificada,
+                dia,
+                id_tarea_excluida
+            )
+
+            if bloque is not None:
+                bloques.append(bloque)
+
+    return ordenar_y_unificar_bloques(bloques)
+
+
+def convertir_tarea_en_bloque_ocupado(
+    tarea: Tarea,
+    dia: date,
+    id_tarea_excluida: int | None = None
+) -> tuple[datetime, datetime] | None:
+    """Convierte una tarea con fecha sugerida en un bloque ocupado."""
+
+    if id_tarea_excluida is not None and tarea.id_tarea == id_tarea_excluida:
+        return None
+
+    if tarea.fecha_inicio_sugerida is None:
+        return None
+
+    if tarea.fecha_inicio_sugerida.date() != dia:
+        return None
+
+    if tarea.horas_estimadas is None or tarea.horas_estimadas <= 0:
+        return None
+
+    horas_ocupadas = min(
+        tarea.horas_estimadas,
+        HORAS_MAXIMAS_POR_BLOQUE
+    )
+
+    inicio = tarea.fecha_inicio_sugerida
+    fin = inicio + timedelta(hours=horas_ocupadas)
+
+    return inicio, fin
 
 
 def obtener_bloques_clase_del_dia(
