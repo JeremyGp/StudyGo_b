@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.core.dependencies import get_current_user
+from app.models.usuario import Usuario
 from app.schemas.usuario import (UsuarioCreate,UsuarioUpdate,UsuarioOut,UsuarioLogin,Token)
 from app.services import usuario as usuario_service
 
@@ -25,12 +26,15 @@ def login(datos: UsuarioLogin,db: Session = Depends(get_db)):
     return token
 
 
-@router.get("/",response_model=list[UsuarioOut], dependencies=[Depends(get_current_user)])
-def listar_usuarios(db: Session = Depends(get_db)):
+@router.get("/",response_model=list[UsuarioOut])
+def listar_usuarios(db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
     return usuario_service.listar_usuarios(db)
 
-@router.get("/{id_usuario}",response_model=UsuarioOut, dependencies=[Depends(get_current_user)])
-def obtener_usuario(id_usuario: int,db: Session = Depends(get_db)):
+@router.get("/{id_usuario}",response_model=UsuarioOut)
+def obtener_usuario(id_usuario: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    if id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para acceder a este usuario.")
+
     usuario = usuario_service.obtener_usuario_por_id(db,id_usuario)
 
     if usuario is None:
@@ -39,8 +43,11 @@ def obtener_usuario(id_usuario: int,db: Session = Depends(get_db)):
     return usuario
 
 
-@router.put("/{id_usuario}",response_model=UsuarioOut, dependencies=[Depends(get_current_user)])
-def actualizar_usuario(id_usuario: int,datos: UsuarioUpdate,db: Session = Depends(get_db)):
+@router.put("/{id_usuario}",response_model=UsuarioOut)
+def actualizar_usuario(id_usuario: int,datos: UsuarioUpdate,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    if id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para modificar este usuario.")
+
     try:
         usuario = usuario_service.actualizar_usuario(db,id_usuario,datos)
 
@@ -53,8 +60,11 @@ def actualizar_usuario(id_usuario: int,datos: UsuarioUpdate,db: Session = Depend
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
 
 
-@router.delete("/{id_usuario}",status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_user)])
-def eliminar_usuario(id_usuario: int,db: Session = Depends(get_db)):
+@router.delete("/{id_usuario}",status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_usuario(id_usuario: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    if id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para eliminar este usuario.")
+
     eliminado = usuario_service.eliminar_usuario(db,id_usuario)
 
     if not eliminado:
