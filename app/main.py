@@ -6,7 +6,7 @@ import app.models
 from app.database.base import Base
 from app.database.database import engine
 from app.core.config import settings
-from app.routers import (usuario,asignatura,horario,tarea,notificacion)
+from app.routers import (usuario,asignatura,horario,tarea,notificacion,dashboard)
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(
@@ -24,6 +24,7 @@ app.include_router(asignatura.router)
 app.include_router(horario.router)
 app.include_router(tarea.router)
 app.include_router(notificacion.router)
+app.include_router(dashboard.router)
 
 #Ruta principal
 @app.get("/")

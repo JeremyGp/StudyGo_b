@@ -8,6 +8,8 @@ from app.models.usuario import Usuario
 from app.schemas.tarea import (TareaCreate,TareaUpdate,TareaOut)
 from app.schemas.subtarea import (SubtareaCreate,SubtareaUpdate,SubtareaOut)
 from app.services import asignatura as asignatura_service
+from app.services import generador_subtarea as generador_subtarea_service
+from app.services import planificacion as planificacion_service
 from app.services import tarea as tarea_service
 from app.services import subtarea as subtarea_service
 
@@ -87,6 +89,97 @@ def eliminar_tarea(id_tarea: int,db: Session = Depends(get_db),usuario_actual: U
     tarea_service.eliminar_tarea(db,id_tarea)
 
 # SUBTAREAS
+
+@router.post("/{id_tarea}/planificar")
+def planificar_tarea(id_tarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    tarea = tarea_service.obtener_tarea_por_id(db,id_tarea)
+
+    if tarea is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
+
+    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para planificar esta tarea.")
+
+    try:
+        return planificacion_service.planificar_tarea(db,id_tarea)
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
+
+
+@router.post("/{id_tarea}/recalcular-planificacion")
+def recalcular_planificacion(id_tarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    tarea = tarea_service.obtener_tarea_por_id(db,id_tarea)
+
+    if tarea is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
+
+    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para recalcular esta tarea.")
+
+    try:
+        return planificacion_service.recalcular_planificacion(db,id_tarea)
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
+
+
+@router.get("/{id_tarea}/plan-estudio")
+def obtener_plan_estudio(id_tarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    tarea = tarea_service.obtener_tarea_por_id(db,id_tarea)
+
+    if tarea is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
+
+    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para consultar el plan de esta tarea.")
+
+    try:
+        bloques = planificacion_service.generar_plan_estudio(db,tarea)
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
+
+    return {
+        "id_tarea": tarea.id_tarea,
+        "fecha_inicio_sugerida": bloques[0]["inicio"] if bloques else None,
+        "horas_estimadas": tarea.horas_estimadas,
+        "bloques": bloques,
+    }
+
+
+@router.post("/{id_tarea}/generar-subtareas",response_model=list[SubtareaOut])
+def generar_subtareas(id_tarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    tarea = tarea_service.obtener_tarea_por_id(db,id_tarea)
+
+    if tarea is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
+
+    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para generar subtareas en esta tarea.")
+
+    try:
+        return generador_subtarea_service.generar_subtareas(db,id_tarea)
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
+
+
+@router.post("/{id_tarea}/regenerar-subtareas",response_model=list[SubtareaOut])
+def regenerar_subtareas(id_tarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    tarea = tarea_service.obtener_tarea_por_id(db,id_tarea)
+
+    if tarea is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
+
+    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para regenerar subtareas en esta tarea.")
+
+    try:
+        return generador_subtarea_service.regenerar_subtareas(db,id_tarea)
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
 
 @router.post("/{id_tarea}/subtareas",response_model=SubtareaOut,status_code=status.HTTP_201_CREATED)
 def crear_subtarea(id_tarea: int,datos: SubtareaCreate,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):

@@ -12,6 +12,7 @@ class Tarea(Base):
     titulo = Column(String(150), nullable=False)
     descripcion = Column(Text)
     fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_inicio = Column(DateTime)
     fecha_inicio_sugerida = Column(DateTime)
     fecha_limite = Column(DateTime)
     horas_estimadas = Column(Integer)
