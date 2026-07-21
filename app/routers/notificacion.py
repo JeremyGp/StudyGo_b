@@ -53,6 +53,19 @@ def actualizar_notificacion(id_notificacion: int,datos: NotificacionUpdate,db: S
 
     return notificacion_service.actualizar_notificacion(db,id_notificacion,datos)
 
+
+@router.patch("/{id_notificacion}/leer",response_model=NotificacionOut)
+def marcar_notificacion_como_leida(id_notificacion: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    notificacion = notificacion_service.obtener_notificacion_por_id(db,id_notificacion)
+
+    if notificacion is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Notificación no encontrada.")
+
+    if notificacion.id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para modificar esta notificación.")
+
+    return notificacion_service.marcar_como_leida(db,id_notificacion)
+
 @router.delete("/{id_notificacion}",status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_notificacion(id_notificacion: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
     notificacion = notificacion_service.obtener_notificacion_por_id(db,id_notificacion)

@@ -9,6 +9,7 @@ from app.schemas.tarea import (TareaCreate,TareaUpdate,TareaOut)
 from app.schemas.subtarea import (SubtareaCreate,SubtareaUpdate,SubtareaOut)
 from app.services import asignatura as asignatura_service
 from app.services import generador_subtarea as generador_subtarea_service
+from app.services import notificacion as notificacion_service
 from app.services import planificacion as planificacion_service
 from app.services import tarea as tarea_service
 from app.services import subtarea as subtarea_service
@@ -177,6 +178,23 @@ def regenerar_subtareas(id_tarea: int,db: Session = Depends(get_db),usuario_actu
 
     try:
         return generador_subtarea_service.regenerar_subtareas(db,id_tarea)
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
+
+
+@router.post("/{id_tarea}/generar-recordatorios")
+def generar_recordatorios(id_tarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
+    tarea = tarea_service.obtener_tarea_por_id(db,id_tarea)
+
+    if tarea is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
+
+    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para generar recordatorios en esta tarea.")
+
+    try:
+        return notificacion_service.generar_recordatorios_tarea(db,id_tarea)
 
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
