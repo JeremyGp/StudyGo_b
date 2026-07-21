@@ -3,20 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.models.usuario import Usuario
 from app.repository import usuario as usuario_repository
-from app.schemas.usuario import UsuarioCreate, UsuarioUpdate
-
-
-def hash_contrasena(contrasena: str) -> str:
-    """Convierte una contraseña en texto plano en un hash seguro."""
-    contrasena_bytes = contrasena.encode("utf-8")
-    salt = bcrypt.gensalt()
-    hash_bytes = bcrypt.hashpw(contrasena_bytes, salt)
-    return hash_bytes.decode("utf-8")
-
-
-def verificar_contrasena(contrasena: str, hash_guardado: str) -> bool:
-    """Compara una contraseña en texto plano contra el hash guardado."""
-    return bcrypt.checkpw(contrasena.encode("utf-8"), hash_guardado.encode("utf-8"))
+from app.schemas.usuario import (UsuarioCreate,UsuarioUpdate,UsuarioOut,UsuarioLogin,Token,)
+from app.core.security import (hash_contrasena,verificar_contrasena,crear_access_token,)
 
 
 def crear_usuario(db: Session, datos: UsuarioCreate) -> Usuario:
@@ -54,6 +42,24 @@ def autenticar_usuario(db: Session,correo: str,contrasena: str) -> Usuario | Non
         return None
 
     return usuario
+
+def login_usuario(db: Session, datos: UsuarioLogin) -> Token | None:
+    """Autentica un usuario y genera un JWT."""
+
+    usuario = autenticar_usuario(db,datos.correo,datos.contrasena)
+
+    if usuario is None:
+        return None
+
+    access_token = crear_access_token(
+        {"sub": usuario.correo}
+    )
+
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        usuario=UsuarioOut.model_validate(usuario)
+    )
 
 # Usuario | None significa que la función puede devolver un objeto Usuario o None si no se encuentra el usuario.
 def obtener_usuario_por_id(db: Session, id_usuario: int) -> Usuario | None:

@@ -20,7 +20,6 @@ class UsuarioLogin(BaseModel):
     """Datos de usuario para que inicie sesión."""
     correo: EmailStr
     contrasena: str
-
 class UsuarioOut(UsuarioBase):
     """Lo que la API devuelve. Nunca incluye la contraseña."""
     id_usuario: int
@@ -28,3 +27,11 @@ class UsuarioOut(UsuarioBase):
     estado: bool
 
     model_config = ConfigDict(from_attributes=True) # es lo que permite convertir directamente un objeto SQLAlchemy (Usuario del modelo) en un UsuarioOut, sin armar el diccionario a mano
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    usuario: UsuarioOut
+
+class TokenData(BaseModel):
+    correo: str | None = None

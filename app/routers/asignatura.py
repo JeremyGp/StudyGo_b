@@ -2,10 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.core.dependencies import get_current_user
 from app.schemas.asignatura import (AsignaturaCreate,AsignaturaUpdate,AsignaturaOut)
 from app.services import asignatura as asignatura_service
 
-router = APIRouter(prefix="/asignaturas",tags=["Asignaturas"])
+router = APIRouter(
+    prefix="/asignaturas",
+    tags=["Asignaturas"],
+    dependencies=[Depends(get_current_user)],
+)
 
 @router.post("/",response_model=AsignaturaOut,status_code=status.HTTP_201_CREATED)
 def crear_asignatura(datos: AsignaturaCreate,id_usuario: int,db: Session = Depends(get_db)):

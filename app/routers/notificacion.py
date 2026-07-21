@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database.database import get_db
+from app.core.dependencies import get_current_user
 from app.schemas.notificacion import (NotificacionCreate,NotificacionUpdate,NotificacionOut)
 from app.services import notificacion as notificacion_service
 
-router = APIRouter(prefix="/notificaciones",tags=["Notificaciones"])
+router = APIRouter(
+    prefix="/notificaciones",
+    tags=["Notificaciones"],
+    dependencies=[Depends(get_current_user)],
+)
 
 @router.post("/",response_model=NotificacionOut,status_code=status.HTTP_201_CREATED)
 def crear_notificacion(datos: NotificacionCreate,id_usuario: int,id_tarea: int | None = None,db: Session = Depends(get_db)):

@@ -2,13 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.core.dependencies import get_current_user
 
 from app.schemas.tarea import (TareaCreate,TareaUpdate,TareaOut)
 from app.schemas.subtarea import (SubtareaCreate,SubtareaUpdate,SubtareaOut)
 from app.services import tarea as tarea_service
 from app.services import subtarea as subtarea_service
 
-router = APIRouter(prefix="/tareas",tags=["Tareas"])
+router = APIRouter(
+    prefix="/tareas",
+    tags=["Tareas"],
+    dependencies=[Depends(get_current_user)],
+)
 
 # TAREAS
 

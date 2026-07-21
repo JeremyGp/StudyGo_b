@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.schemas.usuario import (UsuarioCreate,UsuarioUpdate,UsuarioOut,UsuarioLogin)
+from app.core.dependencies import get_current_user
+from app.schemas.usuario import (UsuarioCreate,UsuarioUpdate,UsuarioOut,UsuarioLogin,Token)
 from app.services import usuario as usuario_service
 
 router = APIRouter(prefix="/usuarios",tags=["Usuarios"])
@@ -14,24 +15,21 @@ def crear_usuario(datos: UsuarioCreate,db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
 
-@router.post("/login")
+@router.post("/login", response_model=Token)
 def login(datos: UsuarioLogin,db: Session = Depends(get_db)):
-    usuario = usuario_service.autenticar_usuario(db,datos.correo,datos.contrasena)
+    token = usuario_service.login_usuario(db, datos)
 
-    if usuario is None:
+    if token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Correo o contraseña incorrectos.")
 
-    return {
-        "mensaje": "Inicio de sesión exitoso.",
-        "usuario": UsuarioOut.model_validate(usuario)
-}
+    return token
 
 
-@router.get("/",response_model=list[UsuarioOut])
+@router.get("/",response_model=list[UsuarioOut], dependencies=[Depends(get_current_user)])
 def listar_usuarios(db: Session = Depends(get_db)):
     return usuario_service.listar_usuarios(db)
 
-@router.get("/{id_usuario}",response_model=UsuarioOut)
+@router.get("/{id_usuario}",response_model=UsuarioOut, dependencies=[Depends(get_current_user)])
 def obtener_usuario(id_usuario: int,db: Session = Depends(get_db)):
     usuario = usuario_service.obtener_usuario_por_id(db,id_usuario)
 
@@ -41,7 +39,7 @@ def obtener_usuario(id_usuario: int,db: Session = Depends(get_db)):
     return usuario
 
 
-@router.put("/{id_usuario}",response_model=UsuarioOut)
+@router.put("/{id_usuario}",response_model=UsuarioOut, dependencies=[Depends(get_current_user)])
 def actualizar_usuario(id_usuario: int,datos: UsuarioUpdate,db: Session = Depends(get_db)):
     try:
         usuario = usuario_service.actualizar_usuario(db,id_usuario,datos)
@@ -55,7 +53,7 @@ def actualizar_usuario(id_usuario: int,datos: UsuarioUpdate,db: Session = Depend
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
 
 
-@router.delete("/{id_usuario}",status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id_usuario}",status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_user)])
 def eliminar_usuario(id_usuario: int,db: Session = Depends(get_db)):
     eliminado = usuario_service.eliminar_usuario(db,id_usuario)
 

@@ -2,10 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.core.dependencies import get_current_user
 from app.schemas.horario import (HorarioCreate,HorarioUpdate,HorarioOut)
 from app.services import horario as horario_service
 
-router = APIRouter(prefix="/horarios",tags=["Horarios"])
+router = APIRouter(
+    prefix="/horarios",
+    tags=["Horarios"],
+    dependencies=[Depends(get_current_user)],
+)
 
 @router.post("/",response_model=HorarioOut,status_code=status.HTTP_201_CREATED)
 def crear_horario(datos: HorarioCreate,id_asignatura: int,db: Session = Depends(get_db)):
