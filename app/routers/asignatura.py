@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -14,7 +16,8 @@ router = APIRouter(
 
 @router.post("/", response_model=AsignaturaOut, status_code=status.HTTP_201_CREATED)
 def crear_asignatura(datos: AsignaturaCreate,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
-    return asignatura_service.crear_asignatura(db,datos,usuario_actual.id_usuario)
+    usuario_id = cast(int, usuario_actual.id_usuario)
+    return asignatura_service.crear_asignatura(db,datos,usuario_id)
 
 @router.get("/{id_asignatura}",response_model=AsignaturaOut)
 def obtener_asignatura(id_asignatura: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
@@ -24,14 +27,15 @@ def obtener_asignatura(id_asignatura: int,db: Session = Depends(get_db),usuario_
     if asignatura is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Asignatura no encontrada.")
 
-    if asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para acceder a esta asignatura.")
 
     return asignatura
 
 @router.get("/", response_model=list[AsignaturaOut])
 def listar_asignaturas(db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
-    return asignatura_service.listar_asignaturas(db,usuario_actual.id_usuario)
+    usuario_id = cast(int, usuario_actual.id_usuario)
+    return asignatura_service.listar_asignaturas(db,usuario_id)
 
 @router.put("/{id_asignatura}",response_model=AsignaturaOut)
 def actualizar_asignatura(id_asignatura: int,datos: AsignaturaUpdate,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
@@ -40,7 +44,7 @@ def actualizar_asignatura(id_asignatura: int,datos: AsignaturaUpdate,db: Session
     if asignatura is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Asignatura no encontrada.")
 
-    if asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para modificar esta asignatura.")
 
     return asignatura_service.actualizar_asignatura(db,id_asignatura,datos)
@@ -52,7 +56,7 @@ def eliminar_asignatura(id_asignatura: int,db: Session = Depends(get_db),usuario
     if asignatura is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Asignatura no encontrada.")
 
-    if asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para eliminar esta asignatura.")
 
     asignatura_service.eliminar_asignatura(db,id_asignatura)
