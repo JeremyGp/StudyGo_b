@@ -1,4 +1,3 @@
-import bcrypt
 from sqlalchemy.orm import Session
 
 from app.models.usuario import Usuario
@@ -10,7 +9,7 @@ from app.core.security import (hash_contrasena,verificar_contrasena,crear_access
 def crear_usuario(db: Session, datos: UsuarioCreate) -> Usuario:
     """Registra un nuevo usuario."""
 
-    # Validar que el correo no exista
+    # Validar que el correo no exista antes de crear el usuario.
     usuario_existente = usuario_repository.obtener_por_correo(db, datos.correo)
 
     if usuario_existente:
@@ -32,13 +31,19 @@ def autenticar_usuario(db: Session,correo: str,contrasena: str) -> Usuario | Non
     if usuario is None:
         return None
 
+    # Se obtiene el hash guardado como texto simple para poder verificarlo
+    # de forma segura contra la contraseña ingresada.
+    hash_guardado = str(getattr(usuario, "contrasena_hash", ""))
+
     if not verificar_contrasena(
         contrasena,
-        usuario.contrasena_hash
+        hash_guardado
     ):
         return None
 
-    if not usuario.estado:
+    # Se comprueba el estado del usuario con un valor Python simple para evitar
+    # errores al trabajar con columnas de SQLAlchemy.
+    if not bool(getattr(usuario, "estado", True)):
         return None
 
     return usuario
@@ -89,9 +94,10 @@ def actualizar_usuario(db: Session, id_usuario: int, datos: UsuarioUpdate) -> Us
         if existente:
             raise ValueError("El correo ya se encuentra registrado.")
 
-    # Si se desea cambiar la contraseña
+    # Si se desea cambiar la contraseña, se actualiza el hash usando setattr
+    # para mantener la compatibilidad con los atributos del modelo SQLAlchemy.
     if datos.contrasena is not None:
-        usuario.contrasena_hash = hash_contrasena(datos.contrasena)
+        setattr(usuario, "contrasena_hash", hash_contrasena(datos.contrasena))
 
     return usuario_repository.actualizar(db, usuario, datos)
 

@@ -28,7 +28,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_
     if usuario is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Usuario no encontrado.")
 
-    if not usuario.estado:
+    if usuario.estado is not True:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Usuario inactivo.")
 
     return usuario

@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -28,7 +30,7 @@ def crear_tarea(datos: TareaCreate,id_asignatura: int,db: Session = Depends(get_
     if asignatura is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Asignatura no encontrada.")
 
-    if asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para crear tareas en esta asignatura.")
 
     try:
@@ -45,7 +47,7 @@ def listar_tareas(id_asignatura: int,db: Session = Depends(get_db),usuario_actua
     if asignatura is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Asignatura no encontrada.")
 
-    if asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para listar tareas de esta asignatura.")
 
     return tarea_service.listar_tareas(db,id_asignatura)
@@ -58,7 +60,7 @@ def obtener_tarea(id_tarea: int,db: Session = Depends(get_db),usuario_actual: Us
     if tarea is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
 
-    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para acceder a esta tarea.")
 
     return tarea
@@ -71,7 +73,7 @@ def actualizar_tarea(id_tarea: int,datos: TareaUpdate,db: Session = Depends(get_
     if tarea is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
 
-    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para modificar esta tarea.")
 
     return tarea_service.actualizar_tarea(db,id_tarea,datos)
@@ -84,7 +86,7 @@ def eliminar_tarea(id_tarea: int,db: Session = Depends(get_db),usuario_actual: U
     if tarea is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
 
-    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para eliminar esta tarea.")
 
     tarea_service.eliminar_tarea(db,id_tarea)
@@ -206,7 +208,7 @@ def crear_subtarea(id_tarea: int,datos: SubtareaCreate,db: Session = Depends(get
     if tarea is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
 
-    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para crear subtareas en esta tarea.")
 
     return subtarea_service.crear_subtarea(db,datos,id_tarea)
@@ -218,7 +220,7 @@ def listar_subtareas(id_tarea: int,db: Session = Depends(get_db),usuario_actual:
     if tarea is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Tarea no encontrada.")
 
-    if tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para listar subtareas de esta tarea.")
 
     return subtarea_service.listar_subtareas(db,id_tarea)
@@ -228,10 +230,10 @@ def listar_subtareas(id_tarea: int,db: Session = Depends(get_db),usuario_actual:
 def obtener_subtarea(id_tarea: int,id_subtarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
     subtarea = subtarea_service.obtener_subtarea_por_id(db,id_subtarea)
 
-    if subtarea is None or subtarea.id_tarea != id_tarea:
+    if subtarea is None or cast(int, subtarea.id_tarea) != id_tarea:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Subtarea no encontrada.")
 
-    if subtarea.tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, subtarea.tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para acceder a esta subtarea.")
 
     return subtarea
@@ -241,10 +243,10 @@ def obtener_subtarea(id_tarea: int,id_subtarea: int,db: Session = Depends(get_db
 def actualizar_subtarea(id_tarea: int,id_subtarea: int,datos: SubtareaUpdate,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
     subtarea = subtarea_service.obtener_subtarea_por_id(db,id_subtarea)
 
-    if subtarea is None or subtarea.id_tarea != id_tarea:
+    if subtarea is None or cast(int, subtarea.id_tarea) != id_tarea:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Subtarea no encontrada.")
 
-    if subtarea.tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, subtarea.tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para modificar esta subtarea.")
 
     return subtarea_service.actualizar_subtarea(db,id_subtarea,datos)
@@ -254,10 +256,10 @@ def actualizar_subtarea(id_tarea: int,id_subtarea: int,datos: SubtareaUpdate,db:
 def eliminar_subtarea(id_tarea: int,id_subtarea: int,db: Session = Depends(get_db),usuario_actual: Usuario = Depends(get_current_user)):
     subtarea = subtarea_service.obtener_subtarea_por_id(db,id_subtarea)
 
-    if subtarea is None or subtarea.id_tarea != id_tarea:
+    if subtarea is None or cast(int, subtarea.id_tarea) != id_tarea:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Subtarea no encontrada.")
 
-    if subtarea.tarea.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, subtarea.tarea.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para eliminar esta subtarea.")
 
     subtarea_service.eliminar_subtarea(db,id_subtarea)

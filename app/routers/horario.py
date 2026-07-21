@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -20,7 +22,7 @@ def crear_horario(datos: HorarioCreate,id_asignatura: int,db: Session = Depends(
     if asignatura is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Asignatura no encontrada.")
 
-    if asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para crear horarios en esta asignatura.")
 
     try:
@@ -37,7 +39,7 @@ def obtener_horario(id_horario: int,db: Session = Depends(get_db),usuario_actual
     if horario is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Horario no encontrado.")
 
-    if horario.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, horario.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para acceder a este horario.")
 
     return horario
@@ -49,7 +51,7 @@ def listar_horarios(id_asignatura: int,db: Session = Depends(get_db),usuario_act
     if asignatura is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Asignatura no encontrada.")
 
-    if asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para listar horarios de esta asignatura.")
 
     return horario_service.listar_horarios(db,id_asignatura)
@@ -61,7 +63,7 @@ def actualizar_horario(id_horario: int,datos: HorarioUpdate,db: Session = Depend
     if horario is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Horario no encontrado.")
 
-    if horario.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, horario.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para modificar este horario.")
 
     return horario_service.actualizar_horario(db,id_horario,datos)
@@ -73,7 +75,7 @@ def eliminar_horario(id_horario: int,db: Session = Depends(get_db),usuario_actua
     if horario is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Horario no encontrado.")
 
-    if horario.asignatura.id_usuario != usuario_actual.id_usuario:
+    if cast(int, horario.asignatura.id_usuario) != cast(int, usuario_actual.id_usuario):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="No tienes permiso para eliminar este horario.")
 
     horario_service.eliminar_horario(db,id_horario)
