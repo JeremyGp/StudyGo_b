@@ -29,7 +29,7 @@ class Tarea(Base):
         try:
             # Se valida la estructura de los datos al crear la tarea para detectar errores de diseño
             # en etapas tempranas y evitar inconsistencias en la persistencia.
-            allowed_fields = {"id_tarea", "titulo", "descripcion", "fecha_creacion", "fecha_inicio_sugerida", "fecha_limite", "horas_estimadas", "estado", "prioridad", "id_asignatura"}
+            allowed_fields = {"id_tarea", "titulo", "descripcion", "fecha_creacion","fecha_inicio", "fecha_inicio_sugerida", "fecha_limite", "horas_estimadas", "estado", "prioridad", "id_asignatura"}
             invalid_fields = set(kwargs) - allowed_fields
             if invalid_fields:
                 raise ValueError(f"Campos no permitidos para Tarea: {sorted(invalid_fields)}")

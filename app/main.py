@@ -75,7 +75,7 @@ async def unhandled_exception_handler(_request: Request, exc: Exception) -> JSON
 
 #CORS
 # React con Vite
-app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080/","http://localhost:8080"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
+app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080","http://localhost:8080"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
 
 #ROUTERS
 app.include_router(usuario.router)
